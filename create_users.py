@@ -15,8 +15,9 @@ with open("users.json") as f:
 
 for user in users:
 
-    # PASO 1 — Crear usuario
+    # PASO 1 — Crear usuario (user_name = email, requerido por la API)
     payload = {
+        "user_name":     user["email"],
         "email_address": user["email"],
         "first_name":    user["first_name"],
         "last_name":     user["last_name"],
@@ -49,7 +50,7 @@ for user in users:
 
     print(f"user_id: {user_id}")
 
-    # PASO 2 — Sobreescribir username
+    # PASO 2 — Sobreescribir username con el valor del JSON
     r_put = requests.put(
         f"{BASE_URL}/{user_id}?partial=true",
         auth=auth,
