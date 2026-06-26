@@ -21,21 +21,32 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install httpie veracode-api-signing
 
-      - name: Validate payload
+      - name: Validate payload and secrets
         shell: bash
         run: |
           set -euo pipefail
 
-          test -f veracode-user-payload.json
+          if [ ! -f veracode-user-payload.json ]; then
+            echo "ERROR: No existe veracode-user-payload.json en la raiz del repo."
+            exit 1
+          fi
+
+          if [ -z "${VERACODE_API_KEY_ID:-}" ] || [ -z "${VERACODE_API_KEY_SECRET:-}" ]; then
+            echo "ERROR: Faltan secrets VERACODE_API_KEY_ID o VERACODE_API_KEY_SECRET."
+            exit 1
+          fi
+
+          jq -e '.user_name and .email_address and .first_name and .last_name' veracode-user-payload.json > /dev/null
 
           USER_NAME=$(jq -r '.user_name' veracode-user-payload.json)
           EMAIL=$(jq -r '.email_address' veracode-user-payload.json)
 
           if [ "$USER_NAME" = "$EMAIL" ]; then
-            echo "ERROR: user_name no debe ser igual al correo."
+            echo "ERROR: user_name no debe ser igual al email_address."
             exit 1
           fi
 
+          echo "Payload validado correctamente."
           jq . veracode-user-payload.json
 
       - name: Create user in Veracode
@@ -45,7 +56,21 @@ jobs:
 
           http --check-status \
             --auth-type=veracode_hmac \
+            --print=hbHB \
             POST "$VERACODE_BASE_URL/api/authn/v2/users" \
             Content-Type:application/json \
             Accept:application/json \
             < veracode-user-payload.json
+
+      - name: Verify user by username
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          USER_NAME=$(jq -r '.user_name' veracode-user-payload.json)
+
+          http --check-status \
+            --auth-type=veracode_hmac \
+            --print=hbHB \
+            GET "$VERACODE_BASE_URL/api/authn/v2/users?user_name=$USER_NAME" \
+            Accept:application/json
