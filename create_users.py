@@ -15,45 +15,27 @@ with open("users.json") as f:
 
 for user in users:
 
-    # PASO 1 — Crear usuario
     payload = {
+        "user_name":     user["username"],
         "email_address": user["email"],
         "first_name":    user["first_name"],
         "last_name":     user["last_name"],
         "active":        True,
-        "user_type":     "HUMAN"
+        "userType":      "VOSP",
+        "pin_required":  True,
+        "roles": [
+            {"role_name": "extreviewer"}
+        ]
     }
 
-    r_create = requests.post(BASE_URL, auth=auth, headers=HEADERS, json=payload)
-
-    print("-------------------------------------")
-    print(f"Creando: {user['email']}")
-    print(f"Status:  {r_create.status_code}")
-
-    if r_create.status_code not in (200, 201):
-        print(f"ERROR al crear: {r_create.text}")
-        continue
-
-    created = r_create.json()
-    user_id = created.get("user_id")
-
-    if not user_id:
-        print(f"ERROR: sin user_id. Respuesta: {created}")
-        continue
-
-    print(f"user_id obtenido: {user_id}")
-
-    # PASO 2 — Asignar username personalizado
-    r_patch = requests.put(
-        f"{BASE_URL}/{user_id}",
+    r = requests.post(
+        BASE_URL,
         auth=auth,
         headers=HEADERS,
-        json={"user_name": user["username"]}
+        data=json.dumps(payload)   # <-- data= en lugar de json=
     )
 
-    print(f"PATCH username → Status: {r_patch.status_code}")
-
-    if r_patch.status_code not in (200, 204):
-        print(f"ERROR en PATCH: {r_patch.text}")
-    else:
-        print(f"Username '{user['username']}' asignado.")
+    print("-------------------------------------")
+    print(f"Creando: {user['username']} / {user['email']}")
+    print(f"Status:  {r.status_code}")
+    print(r.text)
