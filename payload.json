@@ -1,0 +1,11 @@
+{
+  "user_name": "juan.perez_01",
+  "email_address": "juan.perez@empresa.com",
+  "first_name": "Juan",
+  "last_name": "Perez",
+  "title": "Provisioned by GitHub Actions",
+  "ip_restricted": false,
+  "pin_required": true,
+  "active": true,
+  "userType": "VOSP"
+}
