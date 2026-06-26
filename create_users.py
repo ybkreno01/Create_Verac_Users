@@ -12,7 +12,7 @@ with open("users.json") as f:
 for user in users:
 
     payload = {
-        "user_name": user["username"],
+        "user_name": user["user_name"],
         "email_address": user["email"],
         "first_name": user["first_name"],
         "last_name": user["last_name"],
@@ -22,6 +22,6 @@ for user in users:
     r = requests.post(URL, auth=auth, json=payload)
 
     print("-------------------------------------")
-    print(user["username"])
+    print(user["user_name"])
     print(r.status_code)
     print(r.text)
