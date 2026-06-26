@@ -8,8 +8,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      VERACODE_API_KEY_ID: ${{ secrets.VERACODE_API_KEY_ID }}
-      VERACODE_API_KEY_SECRET: ${{ secrets.VERACODE_API_KEY_SECRET }}
+      VERACODE_API_KEY_ID: ${{ secrets.VERACODE_API_ID }}
+      VERACODE_API_KEY_SECRET: ${{ secrets.VERACODE_API_KEY }}
       VERACODE_BASE_URL: https://api.veracode.com
 
     steps:
