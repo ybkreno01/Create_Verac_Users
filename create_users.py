@@ -22,17 +22,14 @@ for user in users:
         "last_name":     user["last_name"],
         "active":        True,
         "userType":      "VOSP",
-        "pin_required":  True,
-        "roles": [
-            {"role_name": "extreviewer"}
-        ]
+        "pin_required":  True
     }
 
     r = requests.post(
         BASE_URL,
         auth=auth,
         headers=HEADERS,
-        data=json.dumps(payload)   # <-- data= en lugar de json=
+        data=json.dumps(payload)
     )
 
     print("-------------------------------------")
