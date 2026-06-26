@@ -6,6 +6,10 @@ BASE_URL = "https://api.veracode.com/api/authn/v2/users"
 
 auth = RequestsAuthPluginVeracodeHMAC()
 
+HEADERS = {
+    "Content-Type": "application/json"
+}
+
 with open("users.json") as f:
     users = json.load(f)
 
@@ -20,7 +24,7 @@ for user in users:
         "user_type":     "HUMAN"
     }
 
-    r_create = requests.post(BASE_URL, auth=auth, json=payload)
+    r_create = requests.post(BASE_URL, auth=auth, headers=HEADERS, json=payload)
 
     print("-------------------------------------")
     print(f"Creando: {user['email']}")
@@ -43,6 +47,7 @@ for user in users:
     r_patch = requests.put(
         f"{BASE_URL}/{user_id}",
         auth=auth,
+        headers=HEADERS,
         json={"user_name": user["username"]}
     )
 
