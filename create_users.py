@@ -15,8 +15,8 @@ with open("users.json") as f:
 
 for user in users:
 
+    # PASO 1 — Crear usuario
     payload = {
-        "user_name":     user["username"],
         "email_address": user["email"],
         "first_name":    user["first_name"],
         "last_name":     user["last_name"],
@@ -25,7 +25,7 @@ for user in users:
         "pin_required":  True
     }
 
-    r = requests.post(
+    r_create = requests.post(
         BASE_URL,
         auth=auth,
         headers=HEADERS,
@@ -33,6 +33,33 @@ for user in users:
     )
 
     print("-------------------------------------")
-    print(f"Creando: {user['username']} / {user['email']}")
-    print(f"Status:  {r.status_code}")
-    print(r.text)
+    print(f"Creando: {user['email']}")
+    print(f"Status:  {r_create.status_code}")
+
+    if r_create.status_code not in (200, 201):
+        print(f"ERROR al crear: {r_create.text}")
+        continue
+
+    created = r_create.json()
+    user_id = created.get("user_id")
+
+    if not user_id:
+        print(f"ERROR: sin user_id. Respuesta: {created}")
+        continue
+
+    print(f"user_id: {user_id}")
+
+    # PASO 2 — Sobreescribir username
+    r_put = requests.put(
+        f"{BASE_URL}/{user_id}?partial=true",
+        auth=auth,
+        headers=HEADERS,
+        data=json.dumps({"user_name": user["username"]})
+    )
+
+    print(f"PUT username → Status: {r_put.status_code}")
+
+    if r_put.status_code not in (200, 204):
+        print(f"ERROR en PUT: {r_put.text}")
+    else:
+        print(f"Username '{user['username']}' asignado.")
