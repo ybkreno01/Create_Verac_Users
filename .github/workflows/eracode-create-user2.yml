@@ -1,0 +1,103 @@
+name: Create Veracode User
+
+on:
+  workflow_dispatch:
+    inputs:
+      user_name:
+        description: "Username Veracode. Debe ser diferente al correo."
+        required: true
+        type: string
+      email:
+        description: "Correo del usuario"
+        required: true
+        type: string
+      first_name:
+        description: "Nombre"
+        required: true
+        type: string
+      last_name:
+        description: "Apellido"
+        required: true
+        type: string
+      title:
+        description: "Titulo opcional"
+        required: false
+        default: "Provisioned by GitHub Actions"
+        type: string
+
+jobs:
+  create-veracode-user:
+    runs-on: ubuntu-latest
+
+    env:
+      VERACODE_API_KEY_ID: ${{ secrets.VERACODE_API_KEY_ID }}
+      VERACODE_API_KEY_SECRET: ${{ secrets.VERACODE_API_KEY_SECRET }}
+      VERACODE_BASE_URL: https://api.veracode.com
+
+    steps:
+      - name: Validate inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "${{ inputs.user_name }}" = "${{ inputs.email }}" ]; then
+            echo "user_name no debe ser igual al correo."
+            exit 1
+          fi
+
+          if [ -z "$VERACODE_API_KEY_ID" ] || [ -z "$VERACODE_API_KEY_SECRET" ]; then
+            echo "Faltan secretos VERACODE_API_KEY_ID o VERACODE_API_KEY_SECRET."
+            exit 1
+          fi
+
+      - name: Install Veracode HMAC tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install httpie veracode-api-signing
+
+      - name: Build user payload
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          jq -n \
+            --arg user_name "${{ inputs.user_name }}" \
+            --arg email "${{ inputs.email }}" \
+            --arg first_name "${{ inputs.first_name }}" \
+            --arg last_name "${{ inputs.last_name }}" \
+            --arg title "${{ inputs.title }}" \
+            '{
+              user_name: $user_name,
+              email_address: $email,
+              first_name: $first_name,
+              last_name: $last_name,
+              title: $title,
+              ip_restricted: false,
+              pin_required: true,
+              active: true,
+              userType: "VOSP"
+            }' > payload.json
+
+          jq . payload.json
+
+      - name: Create user in Veracode
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          http --check-status \
+            --auth-type=veracode_hmac \
+            POST "$VERACODE_BASE_URL/api/authn/v2/users" \
+            Content-Type:application/json \
+            Accept:application/json \
+            < payload.json
+
+      - name: Verify created user by username
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          http --check-status \
+            --auth-type=veracode_hmac \
+            GET "$VERACODE_BASE_URL/api/authn/v2/users" \
+            user_name=="${{ inputs.user_name }}"
