@@ -1,54 +1,26 @@
-import json
-import requests
-from veracode_api_signing.plugin_requests import RequestsAuthPluginVeracodeHMAC
+name: Create Veracode Users
 
-BASE_URL = "https://api.veracode.com/api/authn/v2/users"
+on:
+  workflow_dispatch:
 
-auth = RequestsAuthPluginVeracodeHMAC()
+jobs:
+  create-users:
+    runs-on: ubuntu-latest
 
-with open("users.json") as f:
-    users = json.load(f)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-for user in users:
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-    # PASO 1 — Crear usuario
-    payload = {
-        "email_address": user["email"],
-        "first_name":    user["first_name"],
-        "last_name":     user["last_name"],
-        "active":        True,
-        "user_type":     "HUMAN"
-    }
+      - name: Install dependencies
+        run: pip install requests veracode-api-signing
 
-    r_create = requests.post(BASE_URL, auth=auth, json=payload)
-
-    print("-------------------------------------")
-    print(f"Creando: {user['email']}")
-    print(f"Status:  {r_create.status_code}")
-
-    if r_create.status_code not in (200, 201):
-        print(f"ERROR al crear: {r_create.text}")
-        continue
-
-    created = r_create.json()
-    user_id = created.get("user_id")
-
-    if not user_id:
-        print(f"ERROR: sin user_id. Respuesta: {created}")
-        continue
-
-    print(f"user_id obtenido: {user_id}")
-
-    # PASO 2 — Asignar username personalizado
-    r_patch = requests.put(
-        f"{BASE_URL}/{user_id}",
-        auth=auth,
-        json={"user_name": user["username"]}
-    )
-
-    print(f"PATCH username → Status: {r_patch.status_code}")
-
-    if r_patch.status_code not in (200, 204):
-        print(f"ERROR en PATCH: {r_patch.text}")
-    else:
-        print(f"Username '{user['username']}' asignado.")
+      - name: Create users
+        env:
+          VERACODE_API_KEY_ID:     ${{ secrets.VERACODE_API_ID }}
+          VERACODE_API_KEY_SECRET: ${{ secrets.VERACODE_API_KEY }}
+        run: python create_users.py
