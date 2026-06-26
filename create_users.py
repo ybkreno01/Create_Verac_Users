@@ -59,6 +59,7 @@ for user in users:
     )
 
     print(f"PUT username → Status: {r_put.status_code}")
+    print(f"PUT response body: {r_put.text}")
 
     if r_put.status_code not in (200, 204):
         print(f"ERROR en PUT: {r_put.text}")
